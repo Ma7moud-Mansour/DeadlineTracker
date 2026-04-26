@@ -33,7 +33,11 @@ def run_msa_scraper(student_id, student_password):
         driver.find_element(By.ID, "password").send_keys(student_password)
         driver.find_element(By.ID, "loginbtn").click()
 
-        time.sleep(3) 
+        time.sleep(3)
+
+        if "login" in driver.current_url:
+            return False, "بيانات الدخول غلط يا هندسة، اتأكد من الـ ID والباسورد بتوع المودل."
+             
         driver.get(tasks_url) 
         
         WebDriverWait(driver, 15).until(
