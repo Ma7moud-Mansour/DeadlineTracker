@@ -1,15 +1,16 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html class="dark" lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>Deadline Command Center</title>
+    <title>مركز قيادة الديدلاينز</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+        body { font-family: 'Cairo', sans-serif; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .inner-glow-white\/5 { box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05); }
         .glass-card {
             background: rgba(32, 32, 31, 0.4);
             backdrop-filter: blur(12px);
@@ -35,150 +36,194 @@
         }
     </script>
 </head>
-<body class="bg-background text-white font-inter antialiased min-h-screen overflow-x-hidden">
+<body class="bg-background text-white antialiased min-h-screen overflow-x-hidden">
     
     <header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-4 md:px-6 py-4 bg-slate-950/40 backdrop-blur-xl border-b border-white/10">
         <div class="flex items-center gap-4">
             <button id="mobileMenuBtn" class="md:hidden p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
                 <span class="material-symbols-outlined">menu</span>
             </button>
-            <span class="text-lg md:text-xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">DeadlineCommand</span>
+            <span class="text-lg md:text-xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 font-black">DEADLINE COMMAND</span>
         </div>
         <div class="flex items-center gap-2 md:gap-4">
-            <button class="hidden md:block p-2 text-slate-400 hover:bg-white/5 rounded-lg transition-all"><span class="material-symbols-outlined">notifications</span></button>
-            <div class="flex items-center gap-3 md:pl-4 border-l border-white/10 ml-2 md:ml-0">
-                <div class="text-right hidden sm:block">
-                    <p class="text-[11px] md:text-xs font-bold text-white">Bashmohandes Mahmoud</p>
-                    <p class="text-[9px] md:text-[10px] text-cyan-400">MSA University</p>
+            <div class="flex items-center gap-3 md:pr-4 border-r border-white/10 mr-2 md:mr-0 px-4">
+                <div class="text-left hidden sm:block">
+                    <p class="text-[11px] md:text-xs font-bold text-white">البشمهندس محمود</p>
+                    <p class="text-[9px] md:text-[10px] text-cyan-400 uppercase">جامعة MSA</p>
                 </div>
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex sm:hidden items-center justify-center text-white font-bold text-xs">M</div>
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs">M</div>
             </div>
         </div>
     </header>
 
-    <aside id="sidebar" class="fixed left-0 top-0 h-full flex flex-col p-4 z-40 bg-slate-950/95 backdrop-blur-2xl border-r border-white/5 w-64 pt-24 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
-        <div class="flex items-center gap-3 px-2 pb-6 border-b border-white/5 mb-6 md:hidden">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-lg">M</div>
-            <div>
-                <h3 class="text-sm font-bold text-white">Mahmoud</h3>
-                <p class="text-[11px] text-cyan-400">Computer Science</p>
-            </div>
-        </div>
+    <aside id="sidebar" class="fixed right-0 top-0 h-full flex flex-col p-4 z-40 bg-slate-950/95 backdrop-blur-2xl border-l border-white/5 w-64 pt-24 transform translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out">
         <nav class="flex-1 space-y-2">
-            <a class="flex items-center gap-3 bg-cyan-500/10 text-cyan-400 rounded-lg px-4 py-3 border-l-4 border-cyan-400" href="#">
+            <a class="flex items-center gap-3 bg-cyan-500/10 text-cyan-400 rounded-lg px-4 py-3 border-r-4 border-cyan-400" href="#">
                 <span class="material-symbols-outlined">grid_view</span>
-                <span class="text-sm font-medium">Dashboard</span>
+                <span class="text-sm font-bold">لوحة التحكم</span>
             </a>
-            <a class="flex items-center gap-3 text-slate-400 px-4 py-3 hover:text-white hover:bg-white/5 rounded-lg transition-all" href="{% url 'sync-form' %}">
+            <a class="flex items-center gap-3 text-slate-400 px-4 py-3 hover:text-white hover:bg-white/5 rounded-lg transition-all font-bold" href="{% url 'sync-form' %}">
                 <span class="material-symbols-outlined">sync</span>
-                <span class="text-sm font-medium">Sync New Tasks</span>
+                <span class="text-sm">سحب تاسكات جديدة</span>
             </a>
         </nav>
-        
         <button id="closeSidebarBtn" class="md:hidden mt-auto py-3 bg-white/5 hover:bg-white/10 rounded-lg text-slate-400 font-bold transition-colors flex justify-center gap-2">
-            <span class="material-symbols-outlined">close</span> Close Menu
+            إقفل القائمة <span class="material-symbols-outlined">close</span>
         </button>
     </aside>
 
     <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-30 hidden opacity-0 transition-opacity duration-300 md:hidden"></div>
 
-    <main class="w-full md:ml-64 pt-24 md:pt-28 px-4 md:px-8 pb-12 transition-all duration-300 md:w-[calc(100%-16rem)]">
+    <main class="w-full md:mr-64 pt-24 md:pt-28 px-4 md:px-8 pb-12 transition-all duration-300">
         <section class="max-w-6xl mx-auto mb-8 md:mb-12">
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6">
-                <div>
-                    <h1 class="text-3xl md:text-4xl font-black text-white mb-2">Command Center</h1>
-                    <div class="flex items-center gap-3">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 md:gap-6 text-right">
+                <div class="w-full">
+                    <h1 class="text-3xl md:text-5xl font-black text-white mb-2">مركز العمليات</h1>
+                    <div class="flex items-center gap-3 justify-start">
                         <span class="flex h-3 w-3 relative">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
                         </span>
-                        <p class="text-on-surface-variant text-sm md:text-base font-medium">Your Active Tasks</p>
+                        <p class="text-on-surface-variant text-sm md:text-lg font-bold">التكليفات اللي ورانا دلوقتي</p>
                     </div>
                 </div>
             </div>
         </section>
 
         <section class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            
             {% for task in tasks %}
-            <div id="task-card-{{ task.id }}" class="glass-card rounded-2xl p-5 md:p-6 glow-cyan border-cyan-500/20 flex flex-col group relative overflow-hidden transition-all">
-                <div class="absolute top-0 left-0 w-1 h-full bg-cyan-400"></div>
-                <div class="flex justify-between items-start mb-4">
-                    <span class="text-[10px] md:text-xs text-slate-500 uppercase tracking-widest line-clamp-1 pr-2">{{ task.course|truncatechars:35 }}</span>
-                    <span class="px-2 md:px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 font-bold text-[9px] md:text-[10px] uppercase whitespace-nowrap">Active</span>
+            <div id="task-card-{{ task.id }}" class="glass-card rounded-2xl p-5 md:p-6 glow-cyan border-cyan-500/20 flex flex-col group relative overflow-hidden transition-all text-right">
+                <div class="absolute top-0 right-0 w-1 h-full bg-cyan-400"></div>
+                <div class="flex justify-between items-start mb-4 flex-row-reverse">
+                    <span class="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-widest line-clamp-1 pl-2">{{ task.course }}</span>
+                    <span class="px-2 md:px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 font-black text-[9px] md:text-[10px] uppercase whitespace-nowrap status-badge">شغال</span>
                 </div>
-                <h3 class="text-lg md:text-xl font-bold text-white mb-4 md:mb-6 group-hover:text-cyan-400 transition-colors line-clamp-2">{{ task.title }}</h3>
-                <div class="mt-auto">
-                    <div class="flex items-center gap-2 text-cyan-400 mb-4 md:mb-6">
-                        <span class="material-symbols-outlined text-sm md:text-base">schedule</span>
+                <h3 class="text-lg md:text-xl font-black text-white mb-4 md:mb-6 group-hover:text-cyan-400 transition-colors line-clamp-2">{{ task.title }}</h3>
+                
+                <div class="mt-auto space-y-4">
+                    <div class="bg-white/5 rounded-xl p-3 border border-white/5">
+                        <p class="text-[10px] text-slate-400 mb-1 font-bold">الوقت المتبقي:</p>
+                        <div class="countdown-timer text-cyan-400 font-black text-sm md:text-base tracking-widest" data-date="{{ task.due_date }}">
+                            بيحسب...
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 text-slate-400 justify-end">
                         <span class="text-[11px] md:text-xs font-bold">{{ task.due_date }}</span>
+                        <span class="material-symbols-outlined text-sm md:text-base">schedule</span>
                     </div>
                     
-                    <button onclick="markAsDone({{ task.id }})" class="w-full py-2.5 md:py-3 rounded-xl border border-white/10 hover:bg-white/5 text-white font-bold text-sm md:text-base transition-all flex items-center justify-center gap-2 group/btn">
-                        <span class="material-symbols-outlined text-lg md:text-xl group-hover/btn:scale-110 group-hover/btn:text-cyan-400 transition-all">check_circle</span>
-                        Mark as Done
+                    <button id="btn-{{ task.id }}" onclick="markAsDone({{ task.id }})" class="action-btn w-full py-2.5 md:py-3 rounded-xl border border-white/10 hover:bg-white/5 text-white font-black text-sm md:text-base transition-all flex items-center justify-center gap-2 group/btn">
+                        خلصته يا وحش <span class="material-symbols-outlined text-lg md:text-xl group-hover/btn:scale-110 group-hover/btn:text-cyan-400 transition-all">check_circle</span>
                     </button>
                 </div>
             </div>
             {% empty %}
             <div class="col-span-full glass-card rounded-2xl p-8 md:p-12 text-center border-white/5">
-                <span class="material-symbols-outlined text-5xl md:text-6xl text-slate-600 mb-4">task</span>
-                <h3 class="text-xl md:text-2xl font-bold text-white mb-2">All Caught Up!</h3>
-                <p class="text-sm md:text-base text-slate-400">You have no active deadlines. Enjoy your free time, Bashmohandes!</p>
+                <span class="material-symbols-outlined text-5xl md:text-6xl text-slate-600 mb-4">celebration</span>
+                <h3 class="text-xl md:text-2xl font-black text-white mb-2">رايق ومخلص اللي وراك!</h3>
+                <p class="text-sm md:text-base text-slate-400 font-bold">مفيش ديدلاينز حالياً.. روح عيش حياتك يا بشمهندس.</p>
             </div>
             {% endfor %}
-
         </section>
+
+        <footer class="mt-20 border-t border-white/5 pt-8 text-center">
+            <p class="text-slate-500 font-bold text-sm">
+                تم التطوير بكل ❤️ بواسطة 
+                <span class="text-cyan-400">محمود عبد الكريم</span>
+            </p>
+        </footer>
     </main>
 
     <script>
-        // 1. Mobile Menu Logic
+        // 1. Mobile Menu
         const sidebar = document.getElementById('sidebar');
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const closeSidebarBtn = document.getElementById('closeSidebarBtn');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
 
         function toggleMenu() {
-            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            const isOpen = !sidebar.classList.contains('translate-x-full');
             if (isOpen) {
-                // Close menu
-                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.add('translate-x-full');
                 sidebarOverlay.classList.remove('opacity-100');
-                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300); // Wait for fade out
+                setTimeout(() => sidebarOverlay.classList.add('hidden'), 300);
             } else {
-                // Open menu
-                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.remove('translate-x-full');
                 sidebarOverlay.classList.remove('hidden');
-                // Small delay to allow display:block to apply before animating opacity
                 setTimeout(() => sidebarOverlay.classList.add('opacity-100'), 10);
             }
         }
-
         mobileMenuBtn.addEventListener('click', toggleMenu);
         closeSidebarBtn.addEventListener('click', toggleMenu);
         sidebarOverlay.addEventListener('click', toggleMenu);
 
-        // 2. AJAX Mark as Done Logic
+        // 2. Countdown Timer Logic
+        function updateTimers() {
+            const timers = document.querySelectorAll('.countdown-timer');
+            timers.forEach(timer => {
+                const dateStr = timer.getAttribute('data-date'); // Example: "Tuesday, 28 Oct - 11:59 PM"
+                
+                // Note: This parsing is simple and works with MSA standard format.
+                // For production, a more robust parsing might be needed based on specific locale.
+                const parts = dateStr.match(/(\d+)\s+(\w+)\s+-\s+(\d+):(\d+)\s+(AM|PM)/);
+                if (!parts) {
+                    timer.innerText = "تاريخ غير معروف";
+                    return;
+                }
+
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                const monthIndex = monthNames.indexOf(parts[2]);
+                
+                let hours = parseInt(parts[3]);
+                if (parts[5] === "PM" && hours !== 12) hours += 12;
+                if (parts[5] === "AM" && hours === 12) hours = 0;
+
+                const targetDate = new Date(currentYear, monthIndex, parseInt(parts[1]), hours, parseInt(parts[4]));
+                const diff = targetDate - now;
+
+                const cardId = timer.closest('.glass-card').id;
+                const btn = document.querySelector(`#${cardId} .action-btn`);
+                const badge = document.querySelector(`#${cardId} .status-badge`);
+
+                if (diff <= 0) {
+                    timer.innerText = "فاتتك يا بطل 😢";
+                    timer.classList.replace('text-cyan-400', 'text-red-500');
+                    if (btn) {
+                        btn.innerHTML = 'راحت عليك.. خلاص';
+                        btn.classList.add('opacity-50', 'bg-red-900/20', 'border-red-500/30', 'text-red-500');
+                        btn.onclick = null;
+                    }
+                    if (badge) {
+                        badge.innerText = 'فاتتك';
+                        badge.classList.replace('bg-cyan-500/10', 'bg-red-500/10');
+                        badge.classList.replace('text-cyan-400', 'text-red-500');
+                    }
+                } else {
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hrs = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    timer.innerText = `${days} يوم و ${hrs} ساعة و ${mins} دقيقة`;
+                }
+            });
+        }
+        setInterval(updateTimers, 60000); // Update every minute
+        updateTimers();
+
+        // 3. AJAX
         function markAsDone(taskId) {
             const card = document.getElementById(`task-card-${taskId}`);
             card.classList.add('fade-out');
-            
             fetch(`/complete-task/${taskId}/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}',
                     'Content-Type': 'application/json'
                 }
-            })
-            .then(response => {
-                if(response.ok) {
-                    setTimeout(() => {
-                        card.remove();
-                    }, 400);
-                } else {
-                    card.classList.remove('fade-out');
-                    alert('Network error. Could not update the database.');
-                }
+            }).then(response => {
+                if(response.ok) setTimeout(() => card.remove(), 400);
             });
         }
     </script>
