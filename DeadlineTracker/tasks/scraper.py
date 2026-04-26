@@ -1,13 +1,11 @@
-# tasks/scraper.py
-
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
 
 def run_msa_scraper(student_id, student_password):
-    # اللينكات ثابتة لـ MSA
     login_url = "https://e-learning.msa.edu.eg/login/index.php"
     tasks_url = "https://e-learning.msa.edu.eg/my/"
     
@@ -15,7 +13,19 @@ def run_msa_scraper(student_id, student_password):
     driver = None
 
     try:
-        driver = webdriver.Edge() # لو هترفعه على سيرفر لينكس قدام هنخليها Headless Chrome
+        # ==========================================
+        # إعدادات الـ VPS (Headless Chrome)
+        # ==========================================
+        chrome_options = Options()
+        chrome_options.add_argument("--headless") # تشغيل مخفي بدون واجهة رسومية
+        chrome_options.add_argument("--no-sandbox") # ضروري جداً لسيرفرات لينكس
+        chrome_options.add_argument("--disable-dev-shm-usage") # بيمنع الكراش بسبب الميموري
+        chrome_options.add_argument("--window-size=1920,1080") # بنوهم الموقع إنه فاتح من شاشة كاملة
+        
+        # بنشغل كروم بالإعدادات الجديدة
+        driver = webdriver.Chrome(options=chrome_options)
+        # ==========================================
+        
         driver.get(login_url)
         
         # إدخال بيانات الطالب
@@ -47,10 +57,10 @@ def run_msa_scraper(student_id, student_password):
             except Exception:
                 continue
 
-        # بنرجع الداتا لجانجو مباشرة بدل ما نبعتها بـ API
         return True, extracted_tasks 
 
     except Exception as e:
+        # لو حصل إيرور هنرجعه لجانجو عشان يطبعه لليوزر
         return False, str(e)
 
     finally:
