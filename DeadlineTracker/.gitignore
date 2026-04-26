@@ -1,0 +1,50 @@
+# Virtual Environments
+# --------------------
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python cache and temporary files
+# --------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+# ------------------------
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Databases (Common in Django/Flask)
+# ----------------------------------
+*.sqlite3
+db.sqlite3
+
+# Environment variables (Sensitive data)
+# --------------------------------------
+.env
+.flaskenv
+
+# IDEs and Editors
+# ----------------
+.vscode/
+.idea/
+*.swp
+*.swo

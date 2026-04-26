@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>MSA Tasks Automator</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container": "#20201f",
+                    "surface-container-highest": "#353535",
+                    "primary-container": "#00d2ff",
+                    "on-primary-container": "#00566a",
+                    "primary": "#a5e7ff",
+                    "inverse-primary": "#00677f",
+                    "background": "#131313",
+                    "surface-container-lowest": "#0e0e0e",
+                    "on-surface": "#e5e2e1",
+                    "on-surface-variant": "#bbc9cf",
+                    "on-primary-fixed": "#001f28",
+                    "secondary-fixed": "#79ff5b",
+                    "secondary-fixed-dim": "#2ae500",
+                    "surface-container-low": "#1c1b1b"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "label-bold": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display-xl": ["Inter"]
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(19, 19, 19, 0.4);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+        .neon-glow { box-shadow: 0 0 20px rgba(0, 210, 255, 0.15); }
+        .status-dot-pulse { box-shadow: 0 0 12px #2ae500; }
+        .cinematic-bg { background: radial-gradient(circle at 50% 50%, #1a2a30 0%, #0e0e0e 100%); }
+    </style>
+</head>
+<body class="bg-background cinematic-bg min-h-screen flex items-center justify-center p-6 font-body-md text-on-background antialiased overflow-hidden">
+    <div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-container/10 blur-[120px] rounded-full pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
+    
+    <main class="relative z-10 w-full max-w-md">
+        <div class="glass-card rounded-xl p-8 flex flex-col gap-8 transition-all duration-500 border-white/10">
+            <div class="flex flex-col items-center gap-3 text-center">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary-container to-inverse-primary flex items-center justify-center neon-glow">
+                    <span class="material-symbols-outlined text-on-primary-fixed text-3xl">terminal</span>
+                </div>
+                <div class="space-y-1">
+                    <h1 class="font-display-xl text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-container">
+                        MSA Tasks Automator
+                    </h1>
+                    <p class="text-on-surface-variant font-label-bold text-xs uppercase tracking-widest opacity-60">
+                        Command Center • Sync Protocol
+                    </p>
+                </div>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-lg text-sm text-center">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" id="syncForm" class="space-y-6">
+                {% csrf_token %}
+                <div class="space-y-2">
+                    <label class="block font-label-bold text-label-sm text-on-surface-variant ml-1">Student ID</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span class="material-symbols-outlined text-primary/40 group-focus-within:text-primary transition-colors">badge</span>
+                        </div>
+                        <input name="student_id" required class="w-full bg-surface-container-lowest border border-white/5 rounded-lg py-4 pl-12 pr-4 text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/20 transition-all placeholder:text-surface-container-highest" placeholder="202X-XXXXX" type="text"/>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block font-label-bold text-label-sm text-on-surface-variant ml-1">Password</label>
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <span class="material-symbols-outlined text-primary/40 group-focus-within:text-primary transition-colors">lock</span>
+                        </div>
+                        <input name="student_password" required class="w-full bg-surface-container-lowest border border-white/5 rounded-lg py-4 pl-12 pr-4 text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container/20 transition-all placeholder:text-surface-container-highest" placeholder="••••••••" type="password"/>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" class="w-full relative group overflow-hidden rounded-lg">
+                    <div class="absolute inset-0 bg-gradient-to-r from-primary-container to-inverse-primary opacity-90 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="relative flex items-center justify-center gap-3 py-4 text-on-primary-fixed font-bold text-lg">
+                        <span class="material-symbols-outlined">sync</span>
+                        Sync Tasks
+                    </div>
+                </button>
+            </form>
+
+            <div id="loadingState" class="hidden pt-4 border-t border-white/5">
+                <div class="flex items-center justify-between bg-surface-container-low rounded-lg px-4 py-3 border border-white/5">
+                    <div class="flex items-center gap-3">
+                        <div class="relative flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-fixed-dim opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-secondary-fixed status-dot-pulse"></span>
+                        </div>
+                        <p class="text-xs font-bold text-secondary-fixed uppercase tracking-wider">
+                            Scraping in progress...
+                        </p>
+                    </div>
+                    <div class="flex gap-1">
+                        <div class="w-1 h-4 bg-primary-container/40 rounded-full animate-pulse"></div>
+                        <div class="w-1 h-4 bg-primary-container/20 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+                        <div class="w-1 h-4 bg-primary-container/60 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
+                    </div>
+                </div>
+                <p class="mt-4 text-center text-on-surface-variant text-xs opacity-50">
+                    Establishing secure connection to MSA Portal...<br>Please wait up to 30 seconds.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <div class="fixed inset-0 pointer-events-none opacity-[0.03]" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 40px 40px;"></div>
+
+    <script>
+        document.getElementById('syncForm').addEventListener('submit', function() {
+            // إظهار اللودينج
+            document.getElementById('loadingState').classList.remove('hidden');
+            // عمل تعطيل شكلي للزرار عشان اليوزر ميدوسش مرتين
+            const btn = document.getElementById('submitBtn');
+            btn.classList.add('opacity-50', 'pointer-events-none');
+            btn.innerHTML = `<div class="relative flex items-center justify-center gap-3 py-4 text-on-primary-fixed font-bold text-lg"><span class="material-symbols-outlined animate-spin">autorenew</span> Working...</div>`;
+        });
+    </script>
+</body>
+</html>
