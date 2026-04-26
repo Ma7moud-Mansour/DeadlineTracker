@@ -74,12 +74,12 @@
         <div class="flex items-center gap-2 md:gap-4">
             <div class="flex items-center gap-3 md:pr-4 border-r border-white/10 mr-2 md:mr-0 px-4">
                 <div class="text-left hidden sm:block">
-                    <p class="text-[11px] md:text-xs font-bold text-white">البشمهندس محمود</p>
+                    <p class="text-[11px] md:text-xs font-bold text-white">{{ request.user.username }}</p>
                     <p class="text-[9px] md:text-[10px] text-cyan-400 uppercase">جامعة MSA</p>
                 </div>
                 <div
                     class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-xs">
-                    M</div>
+                    {{ request.user.username|first|upper }}</div>
             </div>
         </div>
     </header>
@@ -96,6 +96,11 @@
                 href="{% url 'sync-form' %}">
                 <span class="material-symbols-outlined">sync</span>
                 <span class="text-sm">سحب تاسكات جديدة</span>
+            </a>
+            <a class="flex items-center gap-3 text-slate-400 px-4 py-3 hover:text-white hover:bg-red-500/10 rounded-lg transition-all font-bold"
+                href="{% url 'logout' %}">
+                <span class="material-symbols-outlined">logout</span>
+                <span class="text-sm">تسجيل خروج</span>
             </a>
         </nav>
         <button id="closeSidebarBtn"
