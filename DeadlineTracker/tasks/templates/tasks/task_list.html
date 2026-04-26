@@ -97,11 +97,13 @@
                 <span class="material-symbols-outlined">sync</span>
                 <span class="text-sm">سحب تاسكات جديدة</span>
             </a>
-            <a class="flex items-center gap-3 text-slate-400 px-4 py-3 hover:text-white hover:bg-red-500/10 rounded-lg transition-all font-bold"
-                href="{% url 'logout' %}">
-                <span class="material-symbols-outlined">logout</span>
-                <span class="text-sm">تسجيل خروج</span>
-            </a>
+            <form method="POST" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="flex items-center gap-3 text-slate-400 px-4 py-3 hover:text-white hover:bg-red-500/10 rounded-lg transition-all font-bold w-full">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span class="text-sm">تسجيل خروج</span>
+                </button>
+            </form>
         </nav>
         <button id="closeSidebarBtn"
             class="md:hidden mt-auto py-3 bg-white/5 hover:bg-white/10 rounded-lg text-slate-400 font-bold transition-colors flex justify-center gap-2">
