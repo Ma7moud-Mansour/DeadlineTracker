@@ -98,11 +98,14 @@ def run_msa_scraper(student_id: str, student_password: str):
         for _ in range(MAX_LOAD_MORE):
             try:
                 load_more = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable(
+                    EC.presence_of_element_located(
                         (By.CSS_SELECTOR, "[data-action='more-events']")
                     )
                 )
-                load_more.click()
+                # Scroll into view first, then JS-click to bypass any overlay
+                driver.execute_script("arguments[0].scrollIntoView({block:'center'});", load_more)
+                time.sleep(0.5)
+                driver.execute_script("arguments[0].click();", load_more)
                 time.sleep(1.5)
             except TimeoutException:
                 break   # no more button — all tasks loaded
