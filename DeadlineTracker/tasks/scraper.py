@@ -1,34 +1,77 @@
+"""
+MSA Moodle Scraper — Phase 1
+
+Ethical crawling:
+  - robots.txt is checked before any scraping begins
+  - Only the authenticated user's own data is accessed
+  - Sequential page loads with implicit waits (no parallel hammering)
+  - "Load More" button clicked up to MAX_LOAD_MORE times for full coverage
+"""
+
+import time
+import urllib.robotparser
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import time
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
-def run_msa_scraper(student_id, student_password):
-    login_url = "https://e-learning.msa.edu.eg/login/index.php"
-    tasks_url = "https://e-learning.msa.edu.eg/my/"
-    
-    extracted_tasks = []
-    driver = None
+from .preprocessing import preprocess_tasks
 
+BASE_URL      = "https://e-learning.msa.edu.eg"
+LOGIN_URL     = f"{BASE_URL}/login/index.php"
+DASHBOARD_URL = f"{BASE_URL}/my/"
+ROBOTS_URL    = f"{BASE_URL}/robots.txt"
+MAX_LOAD_MORE = 5   # maximum "Load More" clicks to avoid infinite loops
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Robots.txt compliance
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _is_scraping_allowed(url: str, user_agent: str = "*") -> bool:
+    """Return True if robots.txt permits fetching url for the given user_agent."""
+    rp = urllib.robotparser.RobotFileParser()
+    rp.set_url(ROBOTS_URL)
     try:
-        # ==========================================
-        # إعدادات الـ VPS (Headless Chrome)
-        # ==========================================
-        chrome_options = Options()
-        chrome_options.add_argument("--headless") # تشغيل مخفي بدون واجهة رسومية
-        chrome_options.add_argument("--no-sandbox") # ضروري جداً لسيرفرات لينكس
-        chrome_options.add_argument("--disable-dev-shm-usage") # بيمنع الكراش بسبب الميموري
-        chrome_options.add_argument("--window-size=1920,1080") # بنوهم الموقع إنه فاتح من شاشة كاملة
-        
-        # بنشغل كروم بالإعدادات الجديدة
-        driver = webdriver.Chrome(options=chrome_options)
-        # ==========================================
-        
-        driver.get(login_url)
-        
-        # إدخال بيانات الطالب
+        rp.read()
+    except Exception:
+        # If we can't read robots.txt, default to allowed (fail-open)
+        return True
+    return rp.can_fetch(user_agent, url)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Main scraper
+# ─────────────────────────────────────────────────────────────────────────────
+
+def run_msa_scraper(student_id: str, student_password: str):
+    """
+    Log in to MSA Moodle as the student and extract all upcoming tasks.
+
+    Returns:
+        (True,  list_of_cleaned_task_dicts)  on success
+        (False, error_message_str)           on failure
+    """
+    # ── Robots.txt check ─────────────────────────────────────────────────────
+    if not _is_scraping_allowed(DASHBOARD_URL):
+        return False, "Scraping disallowed by robots.txt"
+
+    driver = None
+    try:
+        # ── Headless Chrome setup ─────────────────────────────────────────────
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--window-size=1920,1080")
+
+        driver = webdriver.Chrome(options=options)
+
+        # ── Login ─────────────────────────────────────────────────────────────
+        driver.get(LOGIN_URL)
         driver.find_element(By.ID, "username").send_keys(student_id)
         driver.find_element(By.ID, "password").send_keys(student_password)
         driver.find_element(By.ID, "loginbtn").click()
@@ -37,34 +80,80 @@ def run_msa_scraper(student_id, student_password):
 
         if "login" in driver.current_url:
             return False, "بيانات الدخول غلط يا هندسة، اتأكد من الـ ID والباسورد بتوع المودل."
-             
-        driver.get(tasks_url) 
-        
+
+        # ── Navigate to timeline dashboard ────────────────────────────────────
+        driver.get(DASHBOARD_URL)
+
         WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "[data-region='event-list-item']"))
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, "[data-region='event-list-item']")
+            )
         )
-        
-        tasks = driver.find_elements(By.CSS_SELECTOR, "[data-region='event-list-item']")
-        
-        for task in tasks:
+
+        # ── Click "Load More" up to MAX_LOAD_MORE times ───────────────────────
+        for _ in range(MAX_LOAD_MORE):
             try:
-                task_name = task.find_element(By.CSS_SELECTOR, ".event-name a").text
-                course_info = task.find_element(By.CSS_SELECTOR, ".event-name-container small").text
-                due_time = task.find_element(By.CSS_SELECTOR, ".timeline-name small.text-end").text
-                date_header = task.find_element(By.XPATH, "./ancestor::div[contains(@class, 'list-group')]/preceding-sibling::div[@data-region='event-list-content-date'][1]").text
-                
-                extracted_tasks.append({
-                    "title": task_name,
-                    "course": course_info,
-                    "due_date": f"{date_header} - {due_time}"
+                load_more = WebDriverWait(driver, 5).until(
+                    EC.element_to_be_clickable(
+                        (By.CSS_SELECTOR, "[data-action='more-events']")
+                    )
+                )
+                load_more.click()
+                time.sleep(1.5)
+            except TimeoutException:
+                break   # no more button — all tasks loaded
+
+        # ── Extract raw task data ─────────────────────────────────────────────
+        raw_tasks = []
+        task_elements = driver.find_elements(
+            By.CSS_SELECTOR, "[data-region='event-list-item']"
+        )
+
+        for task in task_elements:
+            try:
+                title = task.find_element(
+                    By.CSS_SELECTOR, ".event-name a"
+                ).text.strip()
+
+                course_info = task.find_element(
+                    By.CSS_SELECTOR, ".event-name-container small"
+                ).text.strip()
+
+                due_time = task.find_element(
+                    By.CSS_SELECTOR, ".timeline-name small.text-end"
+                ).text.strip()
+
+                date_header = task.find_element(
+                    By.XPATH,
+                    "./ancestor::div[contains(@class,'list-group')]"
+                    "/preceding-sibling::div[@data-region='event-list-content-date'][1]"
+                ).text.strip()
+
+                raw_tasks.append({
+                    "title":    title,
+                    "course":   course_info,
+                    "due_date": f"{date_header} - {due_time}",
                 })
-            except Exception:
+            except (NoSuchElementException, Exception):
                 continue
 
-        return True, extracted_tasks 
+        # ── Preprocess (clean + validate) ─────────────────────────────────────
+        cleaned_tasks, _quality_report = preprocess_tasks(raw_tasks)
+
+        # Return only valid tasks mapped to the fields the view expects
+        result = [
+            {
+                "title":    t["title"],
+                "course":   t["course"],
+                "due_date": t["due_date"],
+            }
+            for t in cleaned_tasks
+            if t.get("is_valid", True)
+        ]
+
+        return True, result
 
     except Exception as e:
-        # لو حصل إيرور هنرجعه لجانجو عشان يطبعه لليوزر
         return False, str(e)
 
     finally:
