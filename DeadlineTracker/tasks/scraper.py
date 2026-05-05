@@ -16,7 +16,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import (
+    TimeoutException,
+    NoSuchElementException,
+    StaleElementReferenceException,
+)
 
 from .preprocessing import preprocess_tasks
 
@@ -104,13 +108,23 @@ def run_msa_scraper(student_id: str, student_password: str):
                 break   # no more button — all tasks loaded
 
         # ── Extract raw task data ─────────────────────────────────────────────
+        # Re-fetch by index on every iteration to avoid StaleElementReferenceException
+        # (Moodle re-renders the DOM after each "Load More" click)
         raw_tasks = []
-        task_elements = driver.find_elements(
+        task_count = len(driver.find_elements(
             By.CSS_SELECTOR, "[data-region='event-list-item']"
-        )
+        ))
 
-        for task in task_elements:
+        for i in range(task_count):
             try:
+                # Always re-query the full list so each reference is fresh
+                tasks_live = driver.find_elements(
+                    By.CSS_SELECTOR, "[data-region='event-list-item']"
+                )
+                if i >= len(tasks_live):
+                    break
+                task = tasks_live[i]
+
                 title = task.find_element(
                     By.CSS_SELECTOR, ".event-name a"
                 ).text.strip()
@@ -134,7 +148,7 @@ def run_msa_scraper(student_id: str, student_password: str):
                     "course":   course_info,
                     "due_date": f"{date_header} - {due_time}",
                 })
-            except (NoSuchElementException, Exception):
+            except (StaleElementReferenceException, NoSuchElementException, Exception):
                 continue
 
         # ── Preprocess (clean + validate) ─────────────────────────────────────
