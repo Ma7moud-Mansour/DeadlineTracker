@@ -54,8 +54,37 @@ def sync_student_tasks(request):
 def task_list_view(request):
     tasks = UniversityTask.objects.filter(
         user=request.user, is_completed=False
-    ).order_by('-created_at')
-    return render(request, 'tasks/task_list.html', {'tasks': tasks})
+    )
+
+    # ── Course filtering ──────────────────────────────────────────────────
+    all_courses = (
+        tasks.values_list('course', flat=True)
+        .distinct()
+        .order_by('course')
+    )
+    selected_course = request.GET.get('course', '')
+    if selected_course:
+        tasks = tasks.filter(course=selected_course)
+
+    # ── Sorting ───────────────────────────────────────────────────────────
+    sort = request.GET.get('sort', 'date_asc')
+    sort_map = {
+        'date_asc':   'due_date',
+        'date_desc':  '-due_date',
+        'title_asc':  'title',
+        'title_desc': '-title',
+        'course_asc': 'course',
+        'course_desc':'-course',
+    }
+    tasks = tasks.order_by(sort_map.get(sort, 'due_date'))
+
+    context = {
+        'tasks': tasks,
+        'all_courses': all_courses,
+        'selected_course': selected_course,
+        'current_sort': sort,
+    }
+    return render(request, 'tasks/task_list.html', context)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -40,6 +40,19 @@
             transform: scale(0.95);
             transition: all 0.4s ease-out;
         }
+
+        /* Fix dropdown option visibility on dark theme */
+        select option {
+            background-color: #1a1a2e;
+            color: #ffffff;
+            padding: 8px 12px;
+        }
+
+        select option:hover,
+        select option:checked {
+            background-color: #0e7490;
+            color: #ffffff;
+        }
     </style>
     <script id="tailwind-config">
         tailwind.config = {
@@ -128,6 +141,53 @@
                         <p class="text-on-surface-variant text-sm md:text-lg font-bold">التكليفات اللي ورانا دلوقتي</p>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- ── Sorting & Filtering Toolbar ──────────────────────────────────── -->
+        <section class="max-w-6xl mx-auto mb-6 md:mb-8">
+            <div class="glass-card rounded-2xl p-4 md:p-5 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 md:gap-4 border-cyan-500/10">
+                <!-- Sort Dropdown -->
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <span class="material-symbols-outlined text-cyan-400 text-lg flex-shrink-0">swap_vert</span>
+                    <label for="sortSelect" class="text-xs font-bold text-slate-400 whitespace-nowrap">ترتيب:</label>
+                    <select id="sortSelect"
+                        class="bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold px-3 py-2 w-full focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all cursor-pointer appearance-none"
+                        style="background-image: url('data:image/svg+xml;utf8,<svg fill=\'%2394a3b8\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'><path fill-rule=\'evenodd\' d=\'M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z\' clip-rule=\'evenodd\'/></svg>'); background-repeat: no-repeat; background-position: left 0.6rem center; background-size: 1.2rem; padding-left: 2rem;">
+                        <option value="date_asc" {% if current_sort == 'date_asc' %}selected{% endif %}>التاريخ (الأقرب الأول)</option>
+                        <option value="date_desc" {% if current_sort == 'date_desc' %}selected{% endif %}>التاريخ (الأبعد الأول)</option>
+                        <option value="title_asc" {% if current_sort == 'title_asc' %}selected{% endif %}>الاسم (أ → ي)</option>
+                        <option value="title_desc" {% if current_sort == 'title_desc' %}selected{% endif %}>الاسم (ي → أ)</option>
+                        <option value="course_asc" {% if current_sort == 'course_asc' %}selected{% endif %}>المادة (أ → ي)</option>
+                        <option value="course_desc" {% if current_sort == 'course_desc' %}selected{% endif %}>المادة (ي → أ)</option>
+                    </select>
+                </div>
+
+                <!-- Divider -->
+                <div class="hidden sm:block w-px h-8 bg-white/10"></div>
+
+                <!-- Course Filter Dropdown -->
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <span class="material-symbols-outlined text-cyan-400 text-lg flex-shrink-0">filter_list</span>
+                    <label for="courseFilter" class="text-xs font-bold text-slate-400 whitespace-nowrap">المادة:</label>
+                    <select id="courseFilter"
+                        class="bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold px-3 py-2 w-full focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 transition-all cursor-pointer appearance-none"
+                        style="background-image: url('data:image/svg+xml;utf8,<svg fill=\'%2394a3b8\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'><path fill-rule=\'evenodd\' d=\'M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z\' clip-rule=\'evenodd\'/></svg>'); background-repeat: no-repeat; background-position: left 0.6rem center; background-size: 1.2rem; padding-left: 2rem;">
+                        <option value="">كل المواد</option>
+                        {% for course in all_courses %}
+                        <option value="{{ course }}" {% if selected_course == course %}selected{% endif %}>{{ course }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Reset Button -->
+                {% if selected_course or current_sort != 'date_asc' %}
+                <a href="{% url 'task-list' %}"
+                    class="flex items-center justify-center gap-1 px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 text-xs font-bold transition-all border border-red-500/20 whitespace-nowrap">
+                    <span class="material-symbols-outlined text-sm">restart_alt</span>
+                    مسح الفلاتر
+                </a>
+                {% endif %}
             </div>
         </section>
 
@@ -275,6 +335,25 @@
                 if (response.ok) setTimeout(() => card.remove(), 400);
             });
         }
+
+        // 4. Sort & Filter Controls
+        function updateQueryParam(key, value) {
+            const url = new URL(window.location.href);
+            if (value) {
+                url.searchParams.set(key, value);
+            } else {
+                url.searchParams.delete(key);
+            }
+            window.location.href = url.toString();
+        }
+
+        document.getElementById('sortSelect').addEventListener('change', function () {
+            updateQueryParam('sort', this.value);
+        });
+
+        document.getElementById('courseFilter').addEventListener('change', function () {
+            updateQueryParam('course', this.value);
+        });
     </script>
 </body>
 
