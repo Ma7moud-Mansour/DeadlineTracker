@@ -135,6 +135,8 @@ def run_msa_scraper(student_id: str, student_password: str):
                 course_info = task.find_element(
                     By.CSS_SELECTOR, ".event-name-container small"
                 ).text.strip()
+                # Remove "Assignment is due ·" prefix to show only the course name
+                course_info = course_info.replace("Assignment is due ·", "").strip()
 
                 due_time = task.find_element(
                     By.CSS_SELECTOR, ".timeline-name small.text-end"
