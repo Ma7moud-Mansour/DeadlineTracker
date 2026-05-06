@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -10,6 +11,33 @@ from django.conf import settings
 
 from .models import UniversityTask
 from .scraper import run_msa_scraper
+
+
+def _parse_due_date(date_str):
+    """Parse a due_date CharField into a datetime.
+    Handles multiple formats found in the DB:
+      - 'Monday, 27 April 2026 - 23:59'  (Moodle human-readable)
+      - '2026-04-22 15:15:00'             (ISO-like)
+    Returns datetime.max on failure so unparseable dates sort last."""
+    if not date_str:
+        return datetime.max
+
+    # Format 1: ISO-like  "2026-04-22 15:15:00"
+    for fmt in ('%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M'):
+        try:
+            return datetime.strptime(date_str.strip(), fmt)
+        except ValueError:
+            continue
+
+    # Format 2: Moodle human-readable  "Monday, 27 April 2026 - 23:59"
+    try:
+        clean = date_str.split(',', 1)[-1].strip() if ',' in date_str else date_str
+        clean = clean.replace(' - ', ' ')
+        return datetime.strptime(clean, '%d %B %Y %H:%M')
+    except (ValueError, AttributeError):
+        pass
+
+    return datetime.max
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -68,15 +96,22 @@ def task_list_view(request):
 
     # ── Sorting ───────────────────────────────────────────────────────────
     sort = request.GET.get('sort', 'date_asc')
-    sort_map = {
-        'date_asc':   'due_date',
-        'date_desc':  '-due_date',
-        'title_asc':  'title',
-        'title_desc': '-title',
-        'course_asc': 'course',
-        'course_desc':'-course',
-    }
-    tasks = tasks.order_by(sort_map.get(sort, 'due_date'))
+
+    if sort in ('date_asc', 'date_desc'):
+        # Python-level sort: parse the CharField into real datetimes
+        tasks = sorted(
+            tasks,
+            key=lambda t: _parse_due_date(t.due_date),
+            reverse=(sort == 'date_desc'),
+        )
+    else:
+        db_sort_map = {
+            'title_asc':  'title',
+            'title_desc': '-title',
+            'course_asc': 'course',
+            'course_desc':'-course',
+        }
+        tasks = tasks.order_by(db_sort_map.get(sort, 'title'))
 
     context = {
         'tasks': tasks,

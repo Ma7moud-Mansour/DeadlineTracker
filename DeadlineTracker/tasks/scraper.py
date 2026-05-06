@@ -135,8 +135,9 @@ def run_msa_scraper(student_id: str, student_password: str):
                 course_info = task.find_element(
                     By.CSS_SELECTOR, ".event-name-container small"
                 ).text.strip()
-                # Remove "Assignment is due ·" prefix to show only the course name
-                course_info = course_info.replace("Assignment is due ·", "").strip()
+                # Remove any Moodle prefix before "·" (e.g. "Assignment is due ·", "Quiz closes ·")
+                if '\u00b7' in course_info:
+                    course_info = course_info.split('\u00b7', 1)[-1].strip()
 
                 due_time = task.find_element(
                     By.CSS_SELECTOR, ".timeline-name small.text-end"
