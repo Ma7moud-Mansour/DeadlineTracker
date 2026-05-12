@@ -1,4 +1,5 @@
 import os
+import json
 from datetime import datetime
 
 from django.shortcuts import render, redirect
@@ -11,6 +12,9 @@ from django.conf import settings
 
 from .models import UniversityTask
 from .scraper import run_msa_scraper
+import google.generativeai as genai
+
+
 
 
 def _parse_due_date(date_str):
@@ -216,3 +220,68 @@ def eda_view(request):
     stats.pop('charts_saved', None)
 
     return JsonResponse(stats)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. AI Assistant
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+
+
+@login_required
+def process_ai_request(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid method'}, status=405)
+
+    try:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+             return JsonResponse({'error': 'API Key missing'}, status=400)
+            
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-2.5-flash')
+
+        body = json.loads(request.body)
+        mode = body.get('mode')
+
+        # 1. الـ Roaster (التهزيق اللطيف)
+        if mode == 'roaster':
+            if request.session.get('roaster_triggered'):
+                return JsonResponse({'message': None})
+            
+            tasks = UniversityTask.objects.filter(user=request.user, is_completed=False)
+            now = datetime.now()
+            missed_tasks = [t.title for t in tasks if _parse_due_date(t.due_date) < now]
+            
+            if missed_tasks:
+                prompt = f"إنت مرشد أكاديمي مصري بتهزأ الطالب عشان ساب التاسكات دي: {', '.join(missed_tasks)}. شرشحله بلهجة مصرية مضحكة واستخدم 'يا فاشل' و 'يا حودة' بس حفزه في الآخر."
+                response = model.generate_content(prompt)
+                request.session['roaster_triggered'] = True
+                return JsonResponse({'message': response.text})
+            
+            request.session['roaster_triggered'] = True
+            return JsonResponse({'message': None})
+
+        # 2. الـ Plan (تنظيم اليوم) - ده اللي ظهر في الصورة
+        elif mode == 'plan':
+            tasks = UniversityTask.objects.filter(user=request.user, is_completed=False)
+            task_list = "\n".join([f"- {t.title} ({t.course})" for t in tasks])
+            prompt = f"بص يا جيمي، دي تاسكاتي، رتبهملي بجدول أولويات صايع بلهجة مصرية شجاعة:\n{task_list}"
+            response = model.generate_content(prompt)
+            return JsonResponse({'message': response.text})
+
+        # 3. الـ Break (تفكيك التاسك)
+        elif mode == 'break':
+            task_id = body.get('task_id')
+            task = UniversityTask.objects.get(id=task_id, user=request.user)
+            prompt = f"بسطلي التاسك دي ('{task.title}') لـ ٣ خطوات تافهة تخليني أبدأ بلهجة مصرية حماسية."
+            response = model.generate_content(prompt)
+            return JsonResponse({'message': response.text})
+
+        # لو مبعت مـود غريب
+        return JsonResponse({'error': 'Unknown mode'}, status=400)
+        
+    except Exception as e:
+        print(f"CRITICAL AI ERROR: {str(e)}") 
+        return JsonResponse({'error': str(e)}, status=500)

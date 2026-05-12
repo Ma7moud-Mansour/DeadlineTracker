@@ -10,24 +10,33 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# 2. تعريف المسار وطباعته (عشان نتأكد هو بيبص فين)
+env_path = os.path.join(BASE_DIR, '.env')
+print(f"DEBUG: Looking for .env at: {env_path}") 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+# 3. تحميل الملف والتأكد من وجوده
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+    print("DEBUG: .env file found and loaded! ✅")
+else:
+    print("DEBUG: .env file NOT FOUND! ❌")
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-r%f%w%#3z(m=4y+67x)s7ot$ok$#j)w6e=a++^nnu*wku_-oo_'
+# 4. سحب القيم
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-for-dev-only')
+print(f"DEBUG: SECRET_KEY value is: {SECRET_KEY}") # ده هيعرفنا لو لسه فاضي
 
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-
 
 # Application definition
 

@@ -19,4 +19,7 @@ urlpatterns = [
 
     # EDA
     path('eda/', views.eda_view, name='eda'),
+
+    # AI Assistant
+    path('api/ai/', views.process_ai_request, name='process-ai'),
 ]
