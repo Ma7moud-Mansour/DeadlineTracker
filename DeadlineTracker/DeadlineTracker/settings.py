@@ -34,7 +34,7 @@ print(f"DEBUG: SECRET_KEY value is: {SECRET_KEY}") # ده هيعرفنا لو ل
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
