@@ -47,7 +47,9 @@ def _parse_due_date(date_str):
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Sync / Login View
 # ─────────────────────────────────────────────────────────────────────────────
+from ratelimit.decorators import ratelimit
 
+@ratelimit(key='ip', rate='5/m', method='POST', block=True)
 def sync_student_tasks(request):
     if request.method == 'POST':
         student_id       = request.POST.get('student_id')
@@ -195,6 +197,7 @@ def export_xml_view(request):
 # ─────────────────────────────────────────────────────────────────────────────
 # 5. EDA View
 # ─────────────────────────────────────────────────────────────────────────────
+
 
 @login_required
 def eda_view(request):

@@ -34,7 +34,7 @@ print(f"DEBUG: SECRET_KEY value is: {SECRET_KEY}") # ده هيعرفنا لو ل
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['*']
 
@@ -141,3 +141,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # لما يوزر مش مسجل دخول يحاول يفتح صفحة محمية، يتحول للصفحة دي
 LOGIN_URL = '/'
+
+CSRF_COOKIE_SECURE = True  
+SESSION_COOKIE_SECURE = True
+CSRF_TRUSTED_ORIGINS = ['https://deadline-tracker.tekers.tech']
