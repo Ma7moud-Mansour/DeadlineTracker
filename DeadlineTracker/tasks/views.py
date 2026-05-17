@@ -17,6 +17,35 @@ import google.generativeai as genai
 
 
 
+
+from django.core.cache import cache
+from django.http import HttpResponseForbidden
+from functools import wraps
+
+def custom_ratelimit(requests_limit=5, timeout=60):
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            if request.method == 'POST':
+                # بنجيب الـ IP بتاع المستخدم
+                ip = request.META.get('REMOTE_ADDR')
+                cache_key = f"ratelimit_{ip}_{request.path}"
+
+                # بنشوف بعت كام Request
+                request_count = cache.get(cache_key, 0)
+
+                if request_count >= requests_limit:
+                    return HttpResponseForbidden("Too many requests. Please try again later.")
+
+                # بنزود الـ Count وبنحفظه في الكاش بالـ Timeout المحدد (مثلاً دقيقة)
+                cache.set(cache_key, request_count + 1, timeout)
+
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
+
+
+
 def _parse_due_date(date_str):
     """Parse a due_date CharField into a datetime.
     Handles multiple formats found in the DB:
@@ -47,9 +76,7 @@ def _parse_due_date(date_str):
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. Sync / Login View
 # ─────────────────────────────────────────────────────────────────────────────
-from ratelimit.decorators import ratelimit
-
-@ratelimit(key='ip', rate='5/m', method='POST', block=True)
+@custom_ratelimit(requests_limit=5, timeout=60)  # 5 requests لكل دقيقة
 def sync_student_tasks(request):
     if request.method == 'POST':
         student_id       = request.POST.get('student_id')
