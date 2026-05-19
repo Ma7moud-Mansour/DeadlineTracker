@@ -91,21 +91,71 @@ def compute_statistics(tasks: list) -> dict:
     # Day-of-week breakdown
     day_counts = Counter(d.strftime("%A") for d in due_dates_parsed)
 
+    # ── Phase 2: deeper insights ──────────────────────────────────────────────
+    from .features import (
+        classify_urgency, compute_urgency_score, compute_workload_index,
+    )
+
+    # Urgency distribution
+    urgency_counts = Counter(
+        classify_urgency(t["due_date"]) for t in tasks if not t["is_completed"]
+    )
+
+    # Workload index per course (pending tasks only)
+    pending_tasks = [t for t in tasks if not t["is_completed"]]
+    workload      = compute_workload_index(pending_tasks)
+
+    # Busiest week: find the 7-day window with most deadlines
+    busiest_week = _find_busiest_week(due_dates_parsed)
+
+    # Overdue analysis
+    now          = datetime.now()
+    overdue_list = [d for d in due_dates_parsed if d < now]
+    overdue_by_weekday = Counter(d.strftime("%A") for d in overdue_list)
+
     stats = {
-        "total_tasks":         total,
-        "total_users":         len(user_counts),
-        "completed":           completed,
-        "pending":             pending,
-        "completion_rate_pct": round(completed / total * 100, 1),
-        "top_courses":         [{"course": c, "count": n} for c, n in top_courses],
-        "task_types":          dict(type_counter),
-        "avg_tasks_per_user":  avg_per_user,
-        "max_tasks_per_user":  max(task_counts_per_user, default=0),
-        "min_tasks_per_user":  min(task_counts_per_user, default=0),
+        "total_tasks":          total,
+        "total_users":          len(user_counts),
+        "completed":            completed,
+        "pending":              pending,
+        "completion_rate_pct":  round(completed / total * 100, 1),
+        "top_courses":          [{"course": c, "count": n} for c, n in top_courses],
+        "task_types":           dict(type_counter),
+        "avg_tasks_per_user":   avg_per_user,
+        "max_tasks_per_user":   max(task_counts_per_user, default=0),
+        "min_tasks_per_user":   min(task_counts_per_user, default=0),
         "deadlines_by_weekday": dict(day_counts),
-        "unique_courses":      len(course_counts),
+        "unique_courses":       len(course_counts),
+        # Phase 2 additions
+        "urgency_distribution": dict(urgency_counts),
+        "workload_index":       workload,
+        "busiest_week":         busiest_week,
+        "overdue_count":        len(overdue_list),
+        "overdue_by_weekday":   dict(overdue_by_weekday),
     }
     return stats
+
+
+def _find_busiest_week(dates: list) -> dict:
+    """Find the 7-day window starting on the date with the most deadlines."""
+    if not dates:
+        return {}
+    from datetime import timedelta
+    best_start = None
+    best_count = 0
+    for anchor in dates:
+        window_end   = anchor + timedelta(days=7)
+        count        = sum(1 for d in dates if anchor <= d < window_end)
+        if count > best_count:
+            best_count = count
+            best_start = anchor
+    if best_start is None:
+        return {}
+    return {
+        "start":      best_start.strftime("%Y-%m-%d"),
+        "end":        (best_start + timedelta(days=7)).strftime("%Y-%m-%d"),
+        "task_count": best_count,
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────

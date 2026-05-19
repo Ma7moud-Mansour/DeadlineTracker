@@ -20,6 +20,15 @@ urlpatterns = [
     # EDA
     path('eda/', views.eda_view, name='eda'),
 
-    # AI Assistant
+    # AI Assistant  (modes: roaster, plan, break, classify, summarize, sentiment)
     path('api/ai/', views.process_ai_request, name='process-ai'),
+
+    # Phase 2 — Feature Extraction
+    path('api/features/', views.features_view, name='features'),
+
+    # Phase 2 — Evaluation
+    path('api/evaluation/', views.evaluation_view, name='evaluation'),
+
+    # Phase 2 — IR Search
+    path('api/search/', views.search_view, name='search'),
 ]

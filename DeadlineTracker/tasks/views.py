@@ -300,17 +300,174 @@ def process_ai_request(request):
             response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
             return JsonResponse({'message': response.text})
 
-        # 3. الـ Break (تفكيك التاسك)
+        # 3. Break (تفكيك التاسك)
         elif mode == 'break':
             task_id = body.get('task_id')
-            task = UniversityTask.objects.get(id=task_id, user=request.user)
-            prompt = f"بسطلي التاسك دي ('{task.title}') لـ ٣ خطوات تافهة تخليني أبدأ بلهجة مصرية حماسية."
+            task    = UniversityTask.objects.get(id=task_id, user=request.user)
+            prompt  = (
+                f"بسطلي التاسك دي ('{task.title}' من مادة {task.course}) "
+                f"لـ ٣ خطوات واضحة تخليني أبدأ فيها فوراً. "
+                f"اكتب بلهجة مصرية حماسية وخلي كل خطوة في سطر منفصل."
+            )
             response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
             return JsonResponse({'message': response.text})
 
-        # لو مبعت مـود غريب
+        # 4. Classify (تصنيف كل التاسكات بالأولوية)
+        elif mode == 'classify':
+            from .features import classify_urgency, compute_urgency_score
+            tasks = UniversityTask.objects.filter(user=request.user, is_completed=False)
+            classified = [
+                {
+                    "id":            t.id,
+                    "title":         t.title,
+                    "course":        t.course,
+                    "due_date":      t.due_date,
+                    "urgency_label": classify_urgency(t.due_date),
+                    "urgency_score": compute_urgency_score(t.due_date),
+                }
+                for t in tasks
+            ]
+            # Sort by urgency score descending
+            classified.sort(key=lambda x: -x["urgency_score"])
+
+            # Generate AI summary of the classification
+            label_summary = ", ".join(
+                f"{x['urgency_label']}: {x['title'][:30]}" for x in classified[:5]
+            )
+            prompt = (
+                f"دي أعلى ٥ تاسكات أولوية عند الطالب: {label_summary}. "
+                f"قوله بجملتين مصريين سريعين إيه اللي المفروض يعمله دلوقتي."
+            )
+            response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+
+            return JsonResponse({
+                'tasks':   classified,
+                'message': response.text,
+            })
+
+        # 5. Summarize (تلخيص كل التاسكات)
+        elif mode == 'summarize':
+            tasks     = UniversityTask.objects.filter(user=request.user, is_completed=False)
+            task_list = "\n".join(
+                f"- {t.title} | {t.course} | {t.due_date}" for t in tasks
+            )
+            prompt = (
+                f"لخصلي الوضع الأكاديمي لطالب عنده التاسكات دي:\n{task_list}\n\n"
+                f"اكتب ملخص من ٣ جمل: الوضع العام، أكتر حاجة ضاغطة، ونصيحة واحدة."
+                f" بلهجة مصرية واضحة."
+            )
+            response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+            return JsonResponse({'message': response.text})
+
+        # 6. Sentiment (تحليل مزاج الطالب من التاسكات)
+        elif mode == 'sentiment':
+            from .features import compute_urgency_score
+            tasks       = list(UniversityTask.objects.filter(user=request.user, is_completed=False))
+            overdue_n   = sum(1 for t in tasks if _parse_due_date(t.due_date) < datetime.now())
+            total_n     = len(tasks)
+            avg_urgency = round(
+                sum(compute_urgency_score(t.due_date) for t in tasks) / max(total_n, 1), 1
+            )
+            titles = ", ".join(t.title[:40] for t in tasks[:6])
+            prompt = (
+                f"الطالب عنده {total_n} تاسك، منهم {overdue_n} فاتوا ميعادهم، "
+                f"ومتوسط الضغط {avg_urgency}/100. "
+                f"أسماء بعض التاسكات: {titles}. "
+                f"حلل الوضع النفسي والأكاديمي بتاعه في جملتين، وقوله حاجة تشجعه."
+                f" اكتب بالعربي."
+            )
+            response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+            return JsonResponse({
+                'message':     response.text,
+                'stats': {
+                    'total':       total_n,
+                    'overdue':     overdue_n,
+                    'avg_urgency': avg_urgency,
+                },
+            })
+
         return JsonResponse({'error': 'Unknown mode'}, status=400)
-        
+
     except Exception as e:
-        print(f"CRITICAL AI ERROR: {str(e)}") 
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7. Feature Extraction View
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def features_view(request):
+    """Return extracted features for the current user's pending tasks."""
+    from .features import enrich_tasks, compute_tfidf, compute_workload_index
+
+    qs    = UniversityTask.objects.filter(user=request.user, is_completed=False)
+    tasks = [
+        {"id": t.id, "title": t.title, "course": t.course, "due_date": t.due_date}
+        for t in qs
+    ]
+
+    enriched  = enrich_tasks(tasks)
+    tfidf     = compute_tfidf(tasks)
+    workload  = compute_workload_index(tasks)
+
+    return JsonResponse({
+        "total_tasks": len(tasks),
+        "tasks":       enriched,
+        "tfidf":       tfidf,
+        "workload_index": workload,
+    })
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 8. Evaluation View
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def evaluation_view(request):
+    """Run full evaluation report on the current user's tasks."""
+    from .evaluation import generate_evaluation_report, evaluate_ai_response
+
+    qs    = UniversityTask.objects.filter(user=request.user)
+    tasks = [
+        {"title": t.title, "course": t.course, "due_date": t.due_date,
+         "is_completed": t.is_completed}
+        for t in qs
+    ]
+
+    report = generate_evaluation_report(tasks)
+
+    # Sample AI response quality check (using last known AI response if passed)
+    sample_text = request.GET.get("sample_response", "")
+    if sample_text:
+        report["ai_response_quality"] = evaluate_ai_response(sample_text)
+
+    return JsonResponse(report)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 9. Search View (TF-IDF keyword search)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def search_view(request):
+    """Search the user's tasks by keyword using TF-IDF relevance ranking."""
+    from .features import search_tasks
+
+    query = request.GET.get("q", "").strip()
+    if not query:
+        return JsonResponse({"error": "Missing query parameter ?q="}, status=400)
+
+    qs    = UniversityTask.objects.filter(user=request.user, is_completed=False)
+    tasks = [
+        {"id": t.id, "title": t.title, "course": t.course, "due_date": t.due_date}
+        for t in qs
+    ]
+
+    hits = search_tasks(tasks, query, top_n=10)
+    results = [
+        {**tasks[i], "relevance_score": score}
+        for i, score in hits
+    ]
+
+    return JsonResponse({"query": query, "results": results, "count": len(results)})
