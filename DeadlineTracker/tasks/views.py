@@ -12,7 +12,7 @@ from django.conf import settings
 
 from .models import UniversityTask
 from .scraper import run_msa_scraper
-import google.generativeai as genai
+from google import genai as genai_client
 
 
 
@@ -265,12 +265,11 @@ def process_ai_request(request):
         return JsonResponse({'error': 'Invalid method'}, status=405)
 
     try:
-        api_key = os.getenv("GEMINI_API_KEY")
+        api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.getenv("GEMINI_API_KEY")
         if not api_key:
-             return JsonResponse({'error': 'API Key missing'}, status=400)
-            
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+            return JsonResponse({'error': 'API Key missing'}, status=400)
+
+        client = genai_client.Client(api_key=api_key)
 
         body = json.loads(request.body)
         mode = body.get('mode')
@@ -286,7 +285,7 @@ def process_ai_request(request):
             
             if missed_tasks:
                 prompt = f"إنت مرشد أكاديمي مصري بتهزأ الطالب عشان ساب التاسكات دي: {', '.join(missed_tasks)}. شرشحله بلهجة مصرية مضحكة واستخدم 'يا فاشل' و 'يا حودة' بس حفزه في الآخر."
-                response = model.generate_content(prompt)
+                response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
                 request.session['roaster_triggered'] = True
                 return JsonResponse({'message': response.text})
             
@@ -298,7 +297,7 @@ def process_ai_request(request):
             tasks = UniversityTask.objects.filter(user=request.user, is_completed=False)
             task_list = "\n".join([f"- {t.title} ({t.course})" for t in tasks])
             prompt = f"بص يا جيمي، دي تاسكاتي، رتبهملي بجدول أولويات صايع بلهجة مصرية شجاعة:\n{task_list}"
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
             return JsonResponse({'message': response.text})
 
         # 3. الـ Break (تفكيك التاسك)
@@ -306,7 +305,7 @@ def process_ai_request(request):
             task_id = body.get('task_id')
             task = UniversityTask.objects.get(id=task_id, user=request.user)
             prompt = f"بسطلي التاسك دي ('{task.title}') لـ ٣ خطوات تافهة تخليني أبدأ بلهجة مصرية حماسية."
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
             return JsonResponse({'message': response.text})
 
         # لو مبعت مـود غريب

@@ -17,21 +17,11 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 2. تعريف المسار وطباعته (عشان نتأكد هو بيبص فين)
 env_path = os.path.join(BASE_DIR, '.env')
-print(f"DEBUG: Looking for .env at: {env_path}") 
-
-# 3. تحميل الملف والتأكد من وجوده
 if os.path.exists(env_path):
     load_dotenv(env_path)
-    print("DEBUG: .env file found and loaded! ✅")
-else:
-    print("DEBUG: .env file NOT FOUND! ❌")
 
-# 4. سحب القيم
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-fallback-for-dev-only')
-print(f"DEBUG: SECRET_KEY value is: {SECRET_KEY}") # ده هيعرفنا لو لسه فاضي
-
+SECRET_KEY     = os.getenv('SECRET_KEY', 'django-insecure-fallback-for-dev-only')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
@@ -142,6 +132,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # لما يوزر مش مسجل دخول يحاول يفتح صفحة محمية، يتحول للصفحة دي
 LOGIN_URL = '/'
 
-CSRF_COOKIE_SECURE = True  
-SESSION_COOKIE_SECURE = True
+# Secure cookies only on production (HTTPS) — localhost stays functional
+CSRF_COOKIE_SECURE   = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
 CSRF_TRUSTED_ORIGINS = ['https://deadline-tracker.tekers.tech']
